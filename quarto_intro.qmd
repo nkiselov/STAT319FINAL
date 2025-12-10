@@ -1,0 +1,280 @@
+---
+title: "Agricultural Dataset of an Argentinian Corn Field"
+subtitle: "Yield monitor data for a corn field in Argentina with variable nitrogen."
+author: "Jack Nguyen, Nikita Kiselov"
+date: "December 18, 2025"
+date-modified: now
+format: 
+  pdf: 
+    documentclass: article
+    toc: false
+    number-sections: true
+    number-depth: 5
+    fig-align: center
+    cap-location: top
+    geometry: 
+      - top=1in
+      - left=1in
+      - right=1in
+      - bottom=1in
+    colorlinks: true
+execute: 
+  echo: false
+  warning: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+# Introduction
+
+This dataset covers the corn yield and nitrogen fertilizer treatment with field characteristics from the Las Rosas farm in Rio Cuarto, Cordoba, Argentina.  In it, data was collected using yield monitor during the harvests in years 1999 and 2001 to determine the potential of spatial econometric analysis in estimating the crop response functions when it comes to applying nitrogen to corn production.  There are 3443 operations and 8 variables.
+
+
+# Creating Tables
+
+There are multiple ways to create tables in Quarto documents.
+
+## Markdown Tables
+
+You can create simple tables using markdown syntax. Here's an example:
+
+| Variable | Mean | SD   | Min | Max  |
+|----------|------|------|-----|------|
+| Height   | 65.5 | 3.2  | 58  | 73   |
+| Weight   | 150  | 15.5 | 120 | 190  |
+| Age      | 22.3 | 1.8  | 19  | 26   |
+
+: Summary statistics using markdown syntax {#tbl-markdown}
+
+As shown in @tbl-markdown, markdown tables are simple but may lack formatting flexibility for complex data.
+
+## Tables Using kable
+
+For more control over table formatting, use the `kable()` function from the `{knitr}` package:
+
+```{r}
+#| label: tbl-kable-example
+#| tbl-cap: "Summary statistics using kable with enhanced formatting"
+
+# Create sample data
+sample_data <- tibble(
+  id = 1:100,
+  x = rnorm(100, mean = 50, sd = 10),
+  y = 3 + 0.4 * x + rnorm(100, sd = 5)
+)
+
+# Create summary table
+sample_data %>%
+  summarize(
+    n = n(),
+    mean_x = mean(x),
+    sd_x = sd(x),
+    mean_y = mean(y),
+    sd_y = sd(y)
+  ) %>%
+  kable(
+    digits = 2,
+    col.names = c("N", "Mean X", "SD X", "Mean Y", "SD Y"),
+    align = "ccccc"
+  )
+```
+
+## Advanced Tables with kableExtra
+
+For even more formatting options, use the `{kableExtra}` package:
+
+```{r}
+#| label: tbl-advanced
+#| tbl-cap: "Advanced table formatting with kableExtra"
+#| html-table-processing: none
+
+sample_data %>%
+  group_by(cut(x, breaks = 3, labels = c("Low", "Medium", "High"))) %>%
+  summarize(
+    Count = n(),
+    Mean_Y = mean(y),
+    SD_Y = sd(y),
+    Min_Y = min(y),
+    Max_Y = max(y),
+    .groups = "drop"
+  ) %>%
+  kable(
+    digits = 2,
+    col.names = c("X Category", "Count", "Mean Y", "SD Y", "Min Y", "Max Y"),
+    align = "lccccc"
+  ) %>%
+  kable_classic() %>%
+  add_footnote(
+    label = c("Data grouped by tertiles of x values."),
+    notation = "none",
+    threeparttable = TRUE
+  )
+```
+
+Notice how @tbl-advanced includes footnotes and styling. The `html-table-processing: none` option prevents Quarto from re-processing tables created with `{kableExtra}`.
+
+# Creating Figures with R
+
+Figures generated from R code should include proper labels, captions, and alt text for accessibility.
+
+## Basic Plot with Caption
+
+```{r}
+#| label: fig-scatter
+#| fig-cap: "Relationship between predictor x and response y"
+#| fig-height: 5
+#| fig-alt: "Scatterplot showing a positive linear relationship between x and y variables with points distributed around a linear trend"
+
+ggplot(sample_data, aes(x = x, y = y)) +
+  geom_point(alpha = 0.7, color = "steelblue") +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred") +
+  theme_minimal() +
+  labs(
+    x = "Predictor (x)",
+    y = "Response (y)"
+  )
+```
+
+As shown in @fig-scatter, there appears to be a positive linear association between the predictor and the response.
+
+## Plot with Alt Text from Code
+
+You can also specify alt text within the `labs()` function and extract it automatically:
+
+```{r}
+#| label: fig-histogram
+#| fig-cap: "Distribution of predictor variable x"
+#| fig-height: 4
+#| fig-alt: !expr ggplot2::get_alt_text(ggplot2::last_plot())
+
+ggplot(sample_data, aes(x = x)) +
+  geom_histogram(
+    binwidth = 2,
+    fill = "steelblue",
+    color = "black",
+    alpha = 0.7
+  ) +
+  theme_minimal() +
+  labs(
+    x = "Predictor (x)",
+    y = "Frequency",
+    alt = "Histogram showing the distribution of x values, which appears approximately normal and centered around 50"
+  )
+```
+
+The distribution in @fig-histogram shows that x values are approximately normally distributed.
+
+## Multiple Plots
+
+```{r}
+#| label: fig-multiplot
+#| fig-cap: "Comparison of distributions"
+#| fig-height: 4
+#| fig-width: 8
+#| fig-alt: "Two boxplots side by side comparing the distributions of x and y variables"
+
+# Reshape data for plotting
+plot_data <- sample_data %>%
+  select(x, y) %>%
+  pivot_longer(cols = everything(), names_to = "variable", values_to = "value")
+
+ggplot(plot_data, aes(x = variable, y = value, fill = variable)) +
+  geom_boxplot(alpha = 0.7) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    x = "Variable",
+    y = "Value",
+    fill = "Variable"
+  )
+```
+
+# Including External Images
+
+To include external images (not generated by R), you can use markdown syntax:
+
+```markdown
+![Caption for your image](path/to/image.png){#fig-external}
+```
+
+Or use knitr:
+
+```r
+knitr::include_graphics("path/to/image.png")
+```
+
+# Cross-Referencing
+
+Cross-referencing allows you to refer to tables, figures, and sections by name rather than hard-coding numbers.
+
+## Referencing Tables
+
+To reference a table, use `@tbl-label`. For example:
+
+- See @tbl-kable-example for summary statistics
+- Compare results in @tbl-advanced
+
+## Referencing Figures
+
+To reference a figure, use `@fig-label`. For example:
+
+- The scatterplot in @fig-scatter shows a clear trend
+- Distribution details are in @fig-histogram
+
+## Referencing Sections
+
+You can also reference sections by adding labels to headings. For example, the heading:
+
+```markdown
+# Data Analysis {#sec-analysis}
+```
+
+Can be referenced as: See @sec-analysis for details.
+
+# Key Points to Remember
+
+1. **Table Labels**: Must start with `tbl-` (e.g., `#| label: tbl-results`)
+2. **Figure Labels**: Must start with `fig-` (e.g., `#| label: fig-plot1`)
+3. **Section Labels**: Use `{#sec-name}` after heading text
+4. **Alt Text**: Always include `fig-alt` for accessibility
+5. **Captions**: Use `fig-cap` for figures and `tbl-cap` for tables
+6. **Code Appendix**: Automatically collects all your code at the end
+
+# Formatting Tips
+
+- Use **bold** text with `**text**` or `__text__`
+- Use *italic* text with `*text*` or `_text_`
+- Create lists with `-` or numbered lists with `1.`, `2.`, etc.
+- Add inline math with `$equation$` (e.g., $\mu = 50$, $\sigma^2 = 100$)
+- Add display math with `$$equation$$`
+
+# Conclusion
+
+This template provides a foundation for creating professional statistical reports using Quarto. Key features include:
+
+- Professional tables using both markdown and `kable()`
+- Figures with proper captions and alt text for accessibility
+- Cross-referencing capabilities for tables, figures, and sections
+- Automatic code appendix generation
+
+When you start your own project, replace this content with your analysis while maintaining the structure demonstrated here.
+
+{{< pagebreak >}}
+
+# Code Appendix
+
+The code below shows all the R code used to generate the tables and figures in this document. The code is displayed here for transparency and reproducibility but is hidden in the main body of the report.
+
+```{r}
+#| label: codeAppend
+#| ref.label: !expr knitr::all_labels()
+#| echo: true
+#| eval: false
+```
