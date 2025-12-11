@@ -34,8 +34,7 @@ library(kableExtra)
 
 # Introduction
 
-This dataset covers the corn yield and nitrogen fertilizer treatment with field characteristics from the Las Rosas farm in Rio Cuarto, Cordoba, Argentina.  In it, data was collected using yield monitor during the harvests in years 1999 and 2001 to determine the potential of spatial econometric analysis in estimating the crop response functions when it comes to applying nitrogen to corn production.  There are 3443 operations and 8 variables.
-
+This dataset covers the experimental study of corn yield and nitrogen fertilizer treatment with field characteristics from the Las Rosas farm in Rio Cuarto, Cordoba, Argentina.  In it, data was collected using yield monitor from strip trials during the harvests in years 1999 and 2001 to determine the potential of spatial econometric analysis in estimating the site-specific crop response functions when it comes to applying nitrogen treatment.  There are 3443 operations and 8 variables, including the year, latitude, logitude, yield in quintals/ha, amount of nitrogen in kg/ha, topographic factor, brightness value, rep factor, and nitrogen as a factor.  Of these variables, both the topographic, rep, and nitrogen factors, are qualitative while the rest are quantitative.  
 
 # Creating Tables
 
