@@ -37,7 +37,15 @@ dat <- lasrosas.corn
 
 # Introduction
 
+## Dataset Overview
+
 This dataset covers the experimental study of corn yield and nitrogen fertilizer treatment with field characteristics from the Las Rosas farm in Rio Cuarto, Cordoba, Argentina. In it, data was collected using yield monitor from strip trials during the harvests in years 1999 and 2001 to determine the potential of spatial econometric analysis in estimating the site-specific crop response functions when it comes to applying nitrogen treatment. There are 3443 operations and 8 variables, including the year, latitude, longitude, yield in quintals/ha, amount of nitrogen in kg/ha, topographic factor, brightness value, rep factor, and nitrogen as a factor. Of these variables, both the topographic, rep, and nitrogen factors, are qualitative while the rest are quantitative.
+
+## Summary Statistics
+
+For each level, the mean is obtained by dividing the sum of all yield values by the number of observations in the sample, while the median is obtained by finding the middle value from (the sorted version of) that sample. The standard deviation is calculated as the square root of the sum of squared differences, between each yield and mean, divided by the result of subtracting sample size by one.  The interquartile range (IQR) is obtained by finding the lower and upper medians of the two halves of the sample data that is by the median, and then subtracting the lower median from the upper one.  The range is identified by simply obtaining the lowest and highest values from the sample.  The mode is not needed in this study and is therefore never calculated for each level.
+
+## Data Distribution and Visualization
 
 # Data Statistics
 
