@@ -4,6 +4,7 @@ subtitle: "Yield monitor data for a corn field in Argentina with variable nitrog
 author: "Jack Nguyen, Nikita Kiselov"
 date: "December 18, 2025"
 date-modified: now
+bibliography: references.bib
 format: 
   pdf: 
     documentclass: article
@@ -33,25 +34,6 @@ library(kableExtra)
 library(agridat)
 data(lasrosas.corn)
 dat <- lasrosas.corn
-```
-
-# Introduction
-
-## Dataset Overview
-
-This dataset covers the experimental study of corn yield and nitrogen fertilizer treatment with field characteristics from the Las Rosas farm in Rio Cuarto, Cordoba, Argentina. In it, data was collected using yield monitor from strip trials during the harvests in years 1999 and 2001 to determine the potential of spatial econometric analysis in estimating the site-specific crop response functions when it comes to applying nitrogen treatment. There are 3443 operations and 8 variables, including the year, latitude, longitude, yield in quintals/ha, amount of nitrogen in kg/ha, topographic factor, brightness value, rep factor, and nitrogen as a factor. Of these variables, both the topographic, rep, and nitrogen factors, are qualitative while the rest are quantitative.
-
-## Summary Statistics
-
-For each level, the mean is obtained by dividing the sum of all yield values by the number of observations in the sample, while the median is obtained by finding the middle value from (the sorted version of) that sample. The standard deviation is calculated as the square root of the sum of squared differences, between each yield and mean, divided by the result of subtracting sample size by one.  The interquartile range (IQR) is obtained by finding the lower and upper medians of the two halves of the sample data that is by the median, and then subtracting the lower median from the upper one.  The range is identified by simply obtaining the lowest and highest values from the sample.  The mode is not needed in this study and is therefore never calculated for each level.
-
-## Data Distribution and Visualization
-
-# Data Statistics
-
-```{r}
-#| label: tbl-kable-example
-#| tbl-cap: "Summary Statistics of Yield by Nitrogen Fertilizer Level"
 
 sample_data <- tibble(
   id = 1:100,
@@ -59,18 +41,86 @@ sample_data <- tibble(
   y = 3 + 0.4 * x + rnorm(100, sd = 5)
 )
 
+```
+
+# Introduction
+
+## Dataset Overview
+
+This dataset covers the experimental study of corn yield and nitrogen fertilizer treatment with field characteristics from the Las Rosas farm in Rio Cuarto, Cordoba, Argentina done by @nitro2004. The data was collected using yield monitor from strip trials during the harvests in years 1999 and 2001 to determine the potential of spatial econometric analysis in estimating the site-specific crop response functions when it comes to applying nitrogen treatment. There are 3443 operations and 8 variables, including the year, latitude, longitude, yield in quintals/ha, amount of nitrogen in kg/ha, topographic factor, brightness value, rep factor, and nitrogen as a factor. Of these variables, both the topographic, rep, and nitrogen factors, are qualitative while the rest are quantitative.
+
+## Summary Statistics
+
+For each level, the mean is obtained by dividing the sum of all yield values by the number of observations in the sample, while the median is obtained by finding the middle value from (the sorted version of) that sample. The standard deviation is calculated as the square root of the sum of squared differences, between each yield and mean, divided by the result of subtracting sample size by one.  The interquartile range (IQR) is obtained by finding the lower and upper medians of the two halves of the sample data that is by the median, and then subtracting the lower median from the upper one.  The range is identified by simply obtaining the lowest and highest values from the sample.  The mode is not needed in this study and is therefore never calculated for each level.
+
+```{r}
+#| label: summary-stats
+#| tbl-cap: "Summary Statistics of Yield by Nitrogen Fertilizer Level"
+
 dat %>% group_by(nf) %>%
   summarise(
-    Mean = mean(yield, na.rm = TRUE),
-    Median = median(yield, na.rm = TRUE),
-    SD = sd(yield, na.rm = TRUE),
-    IQR = IQR(yield, na.rm = TRUE),
-    Range = paste(min(yield, na.rm = TRUE), "-", max(yield, na.rm = TRUE)),
+    N = n(),
+    Mean = mean(yield),
+    Median = median(yield),
+    SD = sd(yield),
+    IQR = IQR(yield),
+    Range = paste(format(min(yield), nsmall = 1), "-", format(max(yield), nsmall = 1)),
     .groups = "drop"
   ) %>% kable(
-      digits = 2,
-      col.names = c("Level", "Mean", "Median", "SD", "IQR", "Range"))
+      digits = 1,
+      col.names = c("Level", "Size", "Mean", "Median", "SD", "IQR", "Range"))
 ```
+
+```{r}
+#| fig-cap: "Distribution of nitrogen and topography treatment levels"
+#| fig-width: 7
+#| fig-height: 4
+
+par(mfrow = c(1, 2))
+
+pie(table(dat$nf), main = "Nitrogen", radius = 0.9, cex = 0.8, cex.main = 1.2, font.main = 1)
+
+pie(table(dat$topo), main = "Topography",radius = 0.9, cex = 0.8, cex.main = 1.2, font.main = 1)
+```
+
+## Farm topography and yield
+
+```{r}
+#| fig-cap: "Farm topography in 2001"
+#| fig-width: 9
+#| fig-height: 5
+
+library(lattice)
+library(latticeExtra)
+
+d1 <- subset(dat, year == 2001)
+
+topo_cols <- adjustcolor(c("#C44E52","#4E9A06","#4C72B0","#DD8452"), alpha.f = 0.7)
+
+legend_labels <- c("W = West slope", "HT = Hilltop", "E = East slope", "LO = Low East")
+xyplot(lat ~ long, data = d1, groups = topo, pch = 16, col = topo_cols, 
+  key = list(
+    space = "right", title = "Topography",
+    points = list(col = topo_cols, cex = 1.2, pch = 15),
+    text = list(legend_labels)
+  )
+)
+```
+
+```{r}
+#| fig-cap: "Corn yield distribution by location"
+#| fig-width: 9
+#| fig-height: 5
+
+redblue <- colorRampPalette(c("firebrick", "lightgray", "#375997"))
+levelplot(yield ~ long*lat|factor(year), data=dat, 
+          xlab="Longitude", ylab="Latitude",
+          scales=list(alternating=FALSE),
+          prepanel = prepanel.default.xyplot,
+          panel = panel.levelplot.points,
+          type = c("p", "g"), aspect = "iso", col.regions=redblue)
+```
+
 
 ## Advanced Tables with kableExtra
 
@@ -253,6 +303,11 @@ This template provides a foundation for creating professional statistical report
 When you start your own project, replace this content with your analysis while maintaining the structure demonstrated here.
 
 {{< pagebreak >}}
+
+# References
+
+::: {#refs}
+:::
 
 # Code Appendix
 
