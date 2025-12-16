@@ -6,7 +6,8 @@ date: "December 18, 2025"
 date-modified: now
 bibliography: references.bib
 format: 
-  pdf: 
+  pdf:
+    fig-pos: 'H'  
     documentclass: article
     toc: false
     number-sections: true
@@ -51,11 +52,15 @@ This dataset covers the experimental study of corn yield and nitrogen fertilizer
 
 ## Summary Statistics
 
-For each level, the mean is obtained by dividing the sum of all yield values by the number of observations in the sample, while the median is obtained by finding the middle value from (the sorted version of) that sample. The standard deviation is calculated as the square root of the sum of squared differences, between each yield and mean, divided by the result of subtracting sample size by one.  The interquartile range (IQR) is obtained by finding the lower and upper medians of the two halves of the sample data that is by the median, and then subtracting the lower median from the upper one.  The range is identified by simply obtaining the lowest and highest values from the sample.  The mode is not needed in this study and is therefore never calculated for each level.
+For each nitrogen level, the mean was obtained by dividing the sum of all yield values by the number of observations in the sample, while the median was obtained by finding the middle value from (the sorted version of) that sample. 
+
+The standard deviation was calculated as the square root of the sum of squared differences, between each yield and mean, divided by the result of subtracting sample size by one.  The interquartile range (IQR) was obtained by finding the lower and upper medians of the two halves of the sample data that is by the median, and then subtracting the lower median from the upper one.  The range was identified by simply obtaining the lowest and highest values from the sample.  The mode was not needed in this study and therefore was never calculated for each level.
+
+Also for each nitrogen level, the crops were given approximately the same amount of nitrogen treatment.  However, this is not the case in terms of topography levels, as each area of these levels are different.  West Slope (W) recieved the most amount of nitrogen treatment, followed by Low East (LO) and Hilltop (HT), while East Slope (E) recieved the least.
 
 ```{r}
-#| label: summary-stats
-#| tbl-cap: "Summary Statistics of Yield by Nitrogen Fertilizer Level"
+#| label: tbl-summary-stats
+#| tbl-cap: "Summary Statistics of Yield (quintals/ha) by Nitrogen Fertilizer Level"
 
 dat %>% group_by(nf) %>%
   summarise(
@@ -84,7 +89,7 @@ pie(table(dat$topo), main = "Topography",radius = 0.9, cex = 0.8, cex.main = 1.2
 ```
 
 ## Farm topography and yield
-
+In the order from the largest area to the smallest, these topography levels are Low East (LO), Hilltop (HT), East Slope (E), and West Slope (W).  
 ```{r}
 #| fig-cap: "Farm topography in 2001"
 #| fig-width: 9
@@ -93,12 +98,12 @@ pie(table(dat$topo), main = "Topography",radius = 0.9, cex = 0.8, cex.main = 1.2
 library(lattice)
 library(latticeExtra)
 
-d1 <- subset(dat, year == 2001)
+dat2001 <- subset(dat, year == 2001)
 
 topo_cols <- adjustcolor(c("#C44E52","#4E9A06","#4C72B0","#DD8452"), alpha.f = 0.7)
 
 legend_labels <- c("W = West slope", "HT = Hilltop", "E = East slope", "LO = Low East")
-xyplot(lat ~ long, data = d1, groups = topo, pch = 16, col = topo_cols, 
+xyplot(lat ~ long, data = dat2001, groups = topo, pch = 16, col = topo_cols, 
   key = list(
     space = "right", title = "Topography",
     points = list(col = topo_cols, cex = 1.2, pch = 15),
@@ -108,6 +113,7 @@ xyplot(lat ~ long, data = d1, groups = topo, pch = 16, col = topo_cols,
 ```
 
 ```{r}
+#| label: fig-farm-map
 #| fig-cap: "Corn yield distribution by location"
 #| fig-width: 9
 #| fig-height: 5
@@ -118,9 +124,48 @@ levelplot(yield ~ long*lat|factor(year), data=dat,
           scales=list(alternating=FALSE),
           prepanel = prepanel.default.xyplot,
           panel = panel.levelplot.points,
-          type = c("p", "g"), aspect = "iso", col.regions=redblue)
+          type = c("p", "g"), aspect = "iso", col.regions=redblue, cex = 0.4)
 ```
 
+## Sampling distribution
+
+```{r}
+#| label: fig-sample-distr
+#| fig-cap: "Sampling distribution of mean corn yield in 2001 for 10000 samples of size 30"
+means <- replicate(10000,mean(sample(dat2001$yield, size = 30, replace = TRUE)))
+hist(means, main = "", xlab = "mean yield (quintals/ha)")
+```
+As seen in @fig-sample-distr, the sampling distribution is symmetric around 75 and approximately normal.
+
+# One Parameter Test
+The mean corn yield in 2001 across all topographies was 75.2 quintals/ha. However, as seen in @fig-farm-map, the corn yield differed between various parts of the farm. To test whether topography affects corn growth, we compare the true mean corn yield on hilltop topography ($\mu$) to the mean yield of the entire farm in 2001. We use one-sample t-test with the following hypotheses:
+$$H_0: \mu = 75.2\quad \text{(same as farm mean)}$$
+$$H_a: \mu \neq 75.2\quad \text{(different from farm mean)}$$
+There are two assumptions to verify: normality and independence. @fig-qqplot2 shows that the yield distribution is very close to normal apart from a few outliers on the lower end. However, this is expected since some plants could have failing yield due to parasites or other environmental factors. 
+```{r}
+#| label: fig-qqplot2
+#| fig-cap: Q-Q plot for corn yield on hilltop topography in 2001
+dat2001hills <- subset(dat2001, topo == "HT")
+qqnorm(dat2001hills$yield,main = "", pch = 16, cex = 0.4, col = rgb(1, 0, 0, 0.5)); qqline(dat2001hills$yield)
+```
+Independence can't be fully claimed since the data was collected from a single field. Therefore the result can't be generalized to corn yield on hilltop topography in general. However, if the scope of this analysis is limited to the Las Rosas farm and nearby area, the sample contains enough independent measurements and is representative, so the test can continue. 
+
+```{r}
+#| label: tbl-ttest
+#| tbl-cap: "t-test results for hilltop true mean yield"
+ttest_result <- t.test(dat2001hills$yield, mu = 75.2, conf.level = 0.99)
+results_table <- tibble(
+  "p-value" =  format(ttest_result$p.value, scientific = TRUE, digits = 2),
+  df = ttest_result$parameter,
+  "99% CI" = paste(round(ttest_result$conf.int[1], 2), "-", 
+               round(ttest_result$conf.int[2], 2))
+)
+
+knitr::kable(results_table,
+             row.names = FALSE,
+             align = c("l", "l", "l"))
+```
+Based on the data from Las Rosas farm in 2001, we are 99% confident that the true mean yield of corn on hilltop topography of the farmland is between `r round(ttest_result$conf.int[1], 2)` and `r round(ttest_result$conf.int[2], 2)`. Since this interval does not contain 75.2, there is statistically significant evidence against the null hypothesis at 1% significance level. We conclude that the true mean corn yield on hilltop topography is different from the mean yield of all topographies in the Las Rosas farm.
 
 ## Advanced Tables with kableExtra
 
